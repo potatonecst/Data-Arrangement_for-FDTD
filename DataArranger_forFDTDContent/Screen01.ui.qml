@@ -113,7 +113,7 @@ Rectangle {
         text: ""
         flat: true
         highlighted: false
-        icon.source: "../../icon_gear.svg"
+        icon.source: "images/icon_gear.svg"
     }
 
     GroupItem {
@@ -196,6 +196,13 @@ Rectangle {
         x: 196
         y: 724
         text: qsTr("Save Intensity Data")
+
+        Connections {
+            target: saveIntensityDataButton
+            function onClicked() {
+                myUIHandler.save_array_data()
+            }
+        }
     }
 
     Button {

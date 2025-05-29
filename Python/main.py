@@ -26,22 +26,17 @@ class MyUIHandler(QObject):
 
     @Slot()
     def open_folder_dialog(self):
-        """
-        フォルダー選択ダイアログを開き、選択されたフォルダーのパスをシグナルで送信します。
-        """
-        print("フォルダー選択ボタンがクリックされました！")
-        # getExistingDirectory() を使用してフォルダーを選択
+        #フォルダ選択
         folder_path = QFileDialog.getExistingDirectory(
-            parent = None,  # 親ウィジェット
-            caption = "Select Folder", # ダイアログのタイトル
-            dir = ""     # 初期ディレクトリ (空文字列でカレントディレクトリ)
+            parent = None,  #親ウィジェット
+            caption = "Select Folder", #ダイアログのタイトル
+            dir = "" #初期ディレクトリ(空文字列でカレントディレクトリ)
         )
         if folder_path:
-            print(f"選択されたフォルダー: {folder_path}")
-            # 取得したフォルダーパスをQMLに送信するためにシグナルを発行
-            self.folderPathSelected.emit(folder_path)
+            print(f"Selected folder: {folder_path}")
+            self.folderPathSelected.emit(folder_path) #取得したフォルダパスをQMLに送信する
         else:
-            print("フォルダー選択がキャンセルされました。")
+            print("Cancel")
     
     @Slot(str)
     def start_arranging(self, folderPath):
@@ -50,16 +45,14 @@ class MyUIHandler(QObject):
             self.arranger = ArrangerM1(folderPath)
             self.arranger.fileInput()
             self.arranger.extractData()
-            self.theta, self.I= self.arranger.calcPolarization()
+            self.theta, self.I = self.arranger.calcPolarization()
             self.points1 = [[float(np.rad2deg(t)), float(i1)] for t, i1 in zip(self.theta, self.I)]
             if self.sendPoints.emit(self.points1):
                 print("Send successfully")
             else:
                 print("Failed to send")
-            #print(self.points1)
-
         else:
-            print("Select Folder!")
+            print("ERROR: Select Folder!")
             return
     
     @Slot()
@@ -69,7 +62,7 @@ class MyUIHandler(QObject):
             self.grab_result_ref = self.grab_result # 参照を保持
             self.grab_result_ref.ready.connect(self.open_file_dialog)
         else:
-            print("Error: grabToImage (before \"open_file_dialog\" slot)")
+            print("ERROR: grabToImage (before \"open_file_dialog\" slot)")
         
     @Slot()
     def open_file_dialog(self):
@@ -81,12 +74,29 @@ class MyUIHandler(QObject):
                 filter = "PNG Files (*.png);;JPEG Files (*.jpg *.jpeg);;All Files (*)"
             )
             if self.grab_result_ref.saveToFile(self.imgFileName):
-                print("Save successfully")
+                print("Save successfully. (Graph Image)")
             else:
-                print("Failed to save")
+                print("Failed to save. (Graph Image)")
         else:
-            print("Error: (after \"open_file_dialog\" slot)")
+            print("ERROR: (after \"open_file_dialog\" slot)")
             return
+    
+    @Slot()
+    def save_array_data(self):
+        if hasattr(self, "I"):
+            self.arrayFileName, _ = QFileDialog.getSaveFileName(
+                parent = None,
+                caption = "Save Array Data",
+                dir ="./IArray.npy",
+                filter = "NPY Files (*npy)"
+            )
+            if self.arrayFileName:
+                np.save(self.arrayFileName, self.I)
+                print("Save successfully. (Intensity Array Data)")
+            else:
+                print("Failed to save. (Intensity Array Data)")
+        else:
+            print("ERROR: Start Arranging First!")
 
 if __name__ == '__main__':
     os.environ["QT_QUICK_CONTROLS_STYLE"] = "Material"
