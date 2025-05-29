@@ -33,7 +33,7 @@ class MyUIHandler(QObject):
         folder_path = QFileDialog.getExistingDirectory(
             parent = None,  #親ウィジェット
             caption = "Select Folder", #ダイアログのタイトル
-            dir = "" #初期ディレクトリ(空文字列でカレントディレクトリ)
+            dir = "../../" #初期ディレクトリ(空文字列でカレントディレクトリ)
         )
         if folder_path:
             print(f"Selected folder: {folder_path}")
@@ -79,7 +79,7 @@ class MyUIHandler(QObject):
             self.imgFileName, _ = QFileDialog.getSaveFileName(
                 parent = None,
                 caption = "Save Graph",
-                dir = "./Figure1.png",
+                dir = "../../FDTD_Analysis_Result/Figure1.png",
                 filter = "PNG Files (*.png);;JPEG Files (*.jpg *.jpeg);;All Files (*)"
             )
             if self.grab_result_ref.saveToFile(self.imgFileName):
@@ -99,7 +99,7 @@ class MyUIHandler(QObject):
             self.arrayFileName, _ = QFileDialog.getSaveFileName(
                 parent = None,
                 caption = "Save Array Data",
-                dir ="./IArray.npy",
+                dir ="../../FDTD_Analysis_Result/IArray.npy",
                 filter = "NPY Files (*npy)"
             )
             if self.arrayFileName:
