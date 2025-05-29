@@ -173,6 +173,7 @@ Rectangle {
 
                 LineSeries {
                     id: lineSeries
+                    color: "blue"
                 }
             }
 
@@ -243,7 +244,13 @@ Rectangle {
     Connections {
         target: myUIHandler
         function onSendPoints(pointsArray) {
-            lineSeries.replace(pointsArray)
+            lineSeries.clear()
+            //lineSeries.replace(pointsArray)
+            for (var i = 0; i < pointsArray.length; i++) {
+                //var pt = pointsArray[i]
+                lineSeries.append(pointsArray[i][0], pointsArray[i][1])
+            }
+            busyIndicator.running = false
         }
     }
 }

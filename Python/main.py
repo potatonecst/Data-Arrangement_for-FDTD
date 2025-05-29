@@ -6,7 +6,7 @@ import numpy as np
 from PySide6.QtQuickControls2 import QQuickStyle
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtQml import QQmlApplicationEngine
-from PySide6.QtCore import QObject, Slot, Signal, QSize
+from PySide6.QtCore import QObject, Slot, Signal, QSize, QPointF
 from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton, QFileDialog
 
 from autogen.settings import url, import_paths
@@ -55,7 +55,6 @@ class MyUIHandler(QObject):
             self.points1 = [[float(np.rad2deg(t)), float(i1)] for t, i1 in zip(self.theta, self.I)]
             if self.sendPoints.emit(self.points1):
                 print("Send successfully")
-                self.indicatorStop.emit()
             else:
                 print("Failed to send")
                 self.indicatorStop.emit()
