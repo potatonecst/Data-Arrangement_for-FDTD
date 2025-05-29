@@ -17,6 +17,8 @@ class MyUIHandler(QObject):
     folderPathSelected = Signal(str) #フォルダパスが取得されたときにそのパス（文字列）をqmlに送る
     sendPoints = Signal(list) #データ点のlistをqmlに送る
     saveImage = Signal(str)
+    indicatorRun = Signal() #busyIndicatorを回す
+    indicatorStop = Signal() #busyIndicator止める
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -26,6 +28,7 @@ class MyUIHandler(QObject):
 
     @Slot()
     def open_folder_dialog(self):
+        self.indicatorRun.emit()
         #フォルダ選択
         folder_path = QFileDialog.getExistingDirectory(
             parent = None,  #親ウィジェット
@@ -35,11 +38,14 @@ class MyUIHandler(QObject):
         if folder_path:
             print(f"Selected folder: {folder_path}")
             self.folderPathSelected.emit(folder_path) #取得したフォルダパスをQMLに送信する
+            self.indicatorStop.emit()
         else:
             print("Cancel")
+            self.indicatorStop.emit()
     
     @Slot(str)
     def start_arranging(self, folderPath):
+        self.indicatorRun.emit()
         if folderPath:
             print("Start Arranging...")
             self.arranger = ArrangerM1(folderPath)
@@ -49,20 +55,24 @@ class MyUIHandler(QObject):
             self.points1 = [[float(np.rad2deg(t)), float(i1)] for t, i1 in zip(self.theta, self.I)]
             if self.sendPoints.emit(self.points1):
                 print("Send successfully")
+                self.indicatorStop.emit()
             else:
                 print("Failed to send")
+                self.indicatorStop.emit()
         else:
             print("ERROR: Select Folder!")
-            return
+            self.indicatorStop.emit()
     
     @Slot()
     def save_graph(self):
+        self.indicatorRun.emit()
         self.grab_result = self.graphItem.grabToImage()
         if self.grab_result:
             self.grab_result_ref = self.grab_result # 参照を保持
             self.grab_result_ref.ready.connect(self.open_file_dialog)
         else:
             print("ERROR: grabToImage (before \"open_file_dialog\" slot)")
+            self.indicatorStop.emit()
         
     @Slot()
     def open_file_dialog(self):
@@ -75,14 +85,17 @@ class MyUIHandler(QObject):
             )
             if self.grab_result_ref.saveToFile(self.imgFileName):
                 print("Save successfully. (Graph Image)")
+                self.indicatorStop.emit()
             else:
                 print("Failed to save. (Graph Image)")
+                self.indicatorStop.emit()
         else:
             print("ERROR: (after \"open_file_dialog\" slot)")
-            return
+            self.indicatorStop.emit()
     
     @Slot()
     def save_array_data(self):
+        self.indicatorRun.emit()
         if hasattr(self, "I"):
             self.arrayFileName, _ = QFileDialog.getSaveFileName(
                 parent = None,
@@ -93,10 +106,13 @@ class MyUIHandler(QObject):
             if self.arrayFileName:
                 np.save(self.arrayFileName, self.I)
                 print("Save successfully. (Intensity Array Data)")
+                self.indicatorStop.emit()
             else:
                 print("Failed to save. (Intensity Array Data)")
+                self.indicatorStop.emit()
         else:
             print("ERROR: Start Arranging First!")
+            self.indicatorStop.emit()
 
 if __name__ == '__main__':
     os.environ["QT_QUICK_CONTROLS_STYLE"] = "Material"

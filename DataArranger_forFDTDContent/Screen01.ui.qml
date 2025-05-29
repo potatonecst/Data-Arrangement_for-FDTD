@@ -103,7 +103,7 @@ Rectangle {
         id: busyIndicator
         x: 764
         y: 9
-        running: true
+        running: false
     }
 
     RoundButton {
@@ -216,6 +216,20 @@ Rectangle {
             function onClicked() {
                 myUIHandler.save_graph()
             }
+        }
+    }
+
+    Connections {
+        target: myUIHandler
+        function onIndicatorRun() {
+            busyIndicator.running = true
+        }
+    }
+
+    Connections {
+        target: myUIHandler
+        function onIndicatorStop() {
+            busyIndicator.running = false
         }
     }
 
