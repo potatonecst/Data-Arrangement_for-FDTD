@@ -150,6 +150,7 @@ Rectangle {
                 marginBottom: 10
                 axisX: ValueAxis {
                     visible: true
+                    tickInterval: 45
                     titleFont.capitalization: Font.MixedCase
                     tickAnchor: 0
                     subGridVisible: true
@@ -168,7 +169,7 @@ Rectangle {
                     titleVisible: false
                     gridVisible: false
                     titleText: "Intensity [arb. units]"
-                    max: 1.2
+                    max: 1.1
                 }
 
                 LineSeries {

@@ -40,8 +40,12 @@ class ArrangerM1:
         self.EpFile_imag = fileReading(self.folderPath + "/ff_m1_opposite_Ep_imag.txt")
     
     def extractData(self):
-        self.uy = str2Float(self.EpFile_real.readBetween(4, 204))
-        self.uz = str2Float(self.EpFile_real.readBetween(206, 406))
+        self.ux = 1
+        self.uy = np.array(str2Float(self.EpFile_real.readBetween(4, 204)))
+        self.uz = np.array(str2Float(self.EpFile_real.readBetween(206, 406)))
+
+        self.Theta = np.arctan(np.sqrt(self.ux ** 2 + self.uy ** 2) / self.uz)
+        self.Phi = np.arctan(self.uy / self.ux)
 
         self.Es_real = np.array(str2FloatArr(divideStr(self.EsFile_real.readBetween(408, 608))))
         self.Es_imag = np.array(str2FloatArr(divideStr(self.EsFile_imag.readBetween(408, 608))))
@@ -54,8 +58,8 @@ class ArrangerM1:
     def calcPolarization(self):
         self.EsPP = self.Es[100, 100]
         self.EpPP = self.Ep[100, 100]
-        self.EyPP = self.EsPP
-        self.EzPP = -self.EpPP
+        self.EyPP = self.EpPP * np.cos(self.Theta[100]) * np.sin(self.Phi[100]) + self.EsPP * np.cos(self.Phi[100])
+        self.EzPP = -self.EpPP * np.sin(self.Theta[100])
         self.I = CalcPolarizationFDTD(self.EyPP, self.EzPP, self.theta, self.faxis).squeeze()
 
         return self.theta, self.I
