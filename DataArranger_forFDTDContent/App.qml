@@ -6,7 +6,7 @@ Window {
     height: mainScreen.height
 
     visible: true
-    title: "DataArranger_forFDTD"
+    title: "Data Arranger for FDTD"
 
     Screen01 {
         id: mainScreen

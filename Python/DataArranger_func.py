@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from PolarizationCalculation import CalcPolarizationFDTD
@@ -32,6 +33,10 @@ class ArrangerM1:
         self.folderPath = folderPath
         self.theta = np.linspace(0, 2 * np.pi, 1000)
         self.faxis = 0
+        self.divNo = 200
+
+    def setDivisionNo(self, divNo):
+        self.divNo = divNo
 
     def fileInput(self):
         self.EsFile_real = fileReading(self.folderPath + "/ff_m1_opposite_Es_real.txt")
@@ -41,32 +46,33 @@ class ArrangerM1:
     
     def extractData(self):
         self.ux = 1
-        self.uy = np.array(str2Float(self.EpFile_real.readBetween(4, 204)))
-        self.uz = np.array(str2Float(self.EpFile_real.readBetween(206, 406)))
+        self.uy = np.array(str2Float(self.EpFile_real.readBetween(4, 4 + self.divNo)))
+        self.uz = np.array(str2Float(self.EpFile_real.readBetween(6 + self.divNo, 6 + 2 * self.divNo)))
 
-        self.Theta = np.arctan(np.sqrt(self.ux ** 2 + self.uy ** 2) / self.uz)
+        self.Theta = np.arctan(np.sqrt(self.ux ** 2 + self.uy ** 2) / (self.uz + sys.float_info.epsilon))
         self.Phi = np.arctan(self.uy / self.ux)
 
-        self.Es_real = np.array(str2FloatArr(divideStr(self.EsFile_real.readBetween(408, 608))))
-        self.Es_imag = np.array(str2FloatArr(divideStr(self.EsFile_imag.readBetween(408, 608))))
+        self.Es_real = np.array(str2FloatArr(divideStr(self.EsFile_real.readBetween(8 + 2 * self.divNo, 8 + 3 * self.divNo))))
+        self.Es_imag = np.array(str2FloatArr(divideStr(self.EsFile_imag.readBetween(8 + 2 * self.divNo, 8 + 3 * self.divNo))))
         self.Es = self.Es_real + 1j * self.Es_imag
 
-        self.Ep_real = np.array(str2FloatArr(divideStr(self.EpFile_real.readBetween(408, 608))))
-        self.Ep_imag = np.array(str2FloatArr(divideStr(self.EpFile_imag.readBetween(408, 608))))
+        self.Ep_real = np.array(str2FloatArr(divideStr(self.EpFile_real.readBetween(8 + 2 * self.divNo, 8 + 3 * self.divNo))))
+        self.Ep_imag = np.array(str2FloatArr(divideStr(self.EpFile_imag.readBetween(8 + 2 * self.divNo, 8 + 3 * self.divNo))))
         self.Ep = self.Ep_real + 1j * self.Ep_imag
     
     def calcPolarization(self):
-        self.EsPP = self.Es[100, 100]
-        self.EpPP = self.Ep[100, 100]
-        self.EyPP = self.EpPP * np.cos(self.Theta[100]) * np.sin(self.Phi[100]) + self.EsPP * np.cos(self.Phi[100])
-        self.EzPP = -self.EpPP * np.sin(self.Theta[100])
+        self.EsPP = self.Es[int(np.ceil(self.divNo / 2)), int(np.ceil(self.divNo / 2))]
+        self.EpPP = self.Ep[int(np.ceil(self.divNo / 2)), int(np.ceil(self.divNo / 2))]
+        self.EyPP = self.EpPP * np.cos(self.Theta[int(np.ceil(self.divNo / 2))]) * np.sin(self.Phi[int(np.ceil(self.divNo / 2))]) + self.EsPP * np.cos(self.Phi[int(np.ceil(self.divNo / 2))])
+        self.EzPP = -self.EpPP * np.sin(self.Theta[int(np.ceil(self.divNo / 2))])
         self.I = CalcPolarizationFDTD(self.EyPP, self.EzPP, self.theta, self.faxis).squeeze()
 
         return self.theta, self.I
 
 if __name__ == "__main__":
-    folderPath = "/Users/neirotakada/Library/CloudStorage/Box-Box/Sadgrove研究室/研究/FDTD/20250520/90deg_revised"
+    folderPath = "/Users/neirotakada/Library/CloudStorage/Box-Box/Sadgrove研究室/研究/FDTD/20250520/90deg_revised_div201"
     arranger = ArrangerM1(folderPath)
+    arranger.setDivisionNo(201)
     arranger.fileInput()
     arranger.extractData()
     theta, I = arranger.calcPolarization()
