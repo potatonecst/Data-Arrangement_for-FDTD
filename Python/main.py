@@ -14,6 +14,7 @@ from autogen.settings import url, import_paths
 from DataArranger_func import *
 
 class MyUIHandler(QObject):
+    openSettingsWindow = Signal() #Settingsウィンドウを開く
     folderPathSelected = Signal(str) #フォルダパスが取得されたときにそのパス（文字列）をqmlに送る
     sendPoints = Signal(list) #データ点のlistをqmlに送る
     saveImage = Signal(str)
@@ -25,6 +26,10 @@ class MyUIHandler(QObject):
     
     def getObjectName(self, name):
         self.graphItem = name
+
+    @Slot()
+    def open_settings_window(self):
+        self.openSettingsWindow.emit()
 
     @Slot()
     def open_folder_dialog(self):
@@ -138,14 +143,11 @@ if __name__ == '__main__':
         sys.exit(-1)
     
     root_obj = engine.rootObjects()[0] #エンジンからルートオブジェクト取得（ApplicationWindow または QQuickWindow 相当）
-
-    # ウィンドウサイズを取得
-    initial_width = root_obj.width()
+    initial_width = root_obj.width() #ウィンドウサイズを取得
     initial_height = root_obj.height()
-
     root_obj.setMinimumSize(QSize(initial_width, initial_height)) #最小サイズを設定
 
-    graph_item = root_obj.findChild(QObject, "graphImage") # "graphImage" を探す
+    graph_item = root_obj.findChild(QObject, "graphImage") #"graphImage" を探す
     my_ui_handler.getObjectName(graph_item)
 
     sys.exit(app.exec())

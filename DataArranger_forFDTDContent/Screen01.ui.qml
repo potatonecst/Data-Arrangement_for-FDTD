@@ -114,6 +114,13 @@ Rectangle {
         flat: true
         highlighted: false
         icon.source: "images/icon_gear.svg"
+
+        Connections {
+            target: settingsButton
+            function onClicked() {
+                myUIHandler.open_settings_window()
+            }
+        }
     }
 
     GroupItem {

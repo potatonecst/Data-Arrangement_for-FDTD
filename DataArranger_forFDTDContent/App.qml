@@ -12,5 +12,33 @@ Window {
         id: mainScreen
     }
 
-}
+    Window {
+        id: settingsWindow
+        width: 500
+        height: 400
+        minimumWidth: 500
+        minimumHeight: 400
+        visible: false
+        title: "Settings"
 
+        Loader {
+            id: settingsLoader
+            anchors.fill: parent
+            source: "./SettingsWindow.ui.qml"  // .ui.qml を読み込む
+            onLoaded: {
+                if (settingsLoader.item) {
+                    // 必要ならさらに設定も可能
+                    settingsLoader.item.width = settingsWindow.width
+                    settingsLoader.item.height = settingsWindow.height
+                }
+            }
+        }
+    }
+
+    Connections {
+        target: myUIHandler
+        function onOpenSettingsWindow() {
+            settingsWindow.visible = "true"
+        }
+    }
+}
