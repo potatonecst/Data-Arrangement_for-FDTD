@@ -1,5 +1,4 @@
 
-
 /*
 This is a UI file (.ui.qml) that is intended to be edited in Qt Design Studio only.
 It is supposed to be strictly declarative and only uses a subset of QML. If you edit
@@ -7,6 +6,7 @@ this file manually, you might introduce QML code that is not supported by Qt Des
 Check out https://doc.qt.io/qtcreator/creator-quick-ui-forms.html for details on .ui.qml files.
 */
 import QtQuick
+import QtQuick3D
 import QtQuick.Controls
 import DataArranger_forFDTD
 import QtQuick.Studio.Components 1.0
@@ -127,138 +127,247 @@ Rectangle {
         id: graph
         x: 24
         y: 180
+        height: 540
 
         Label {
             id: header_GraphArea
             x: 0
-            y: 0
+            y: 6
             text: qsTr("Graph Area")
             font.pointSize: 20
             font.bold: true
         }
 
+        ComboBox {
+            id: graphSelect
+            x: 110
+            y: 0
+            width: 153
+            height: 35
+            visible: false
+            font.pointSize: 13
+            model: ["QWP", "Poincaré Sphere"]
+            currentIndex: 0
+        }
+
         Rectangle {
             id: graphImage
             objectName: "graphImage"
-            y: 28
+            y: 39
             width: 800
             height: 500
             radius: 0
             bottomLeftRadius: 0
             topLeftRadius: 0
 
-            GraphsView {
-                id: graphArea
+            GroupItem {
+                id: graphQWP
                 x: 0
                 y: 0
-                width: 800
-                height: 500
-                marginLeft: 10
-                marginBottom: 10
-                axisX: ValueAxis {
+                anchors.fill: parent
+                //visible: true
+                visible: graphSelect.currentIndex === 0
+
+                GraphsView {
+                    id: graphAreaQWP
+                    x: 0
+                    y: 0
+                    width: 800
+                    height: 500
+                    marginLeft: 10
+                    marginBottom: 10
                     visible: true
-                    tickInterval: 45
-                    titleFont.capitalization: Font.MixedCase
-                    tickAnchor: 0
-                    subGridVisible: true
-                    titleVisible: true
-                    gridVisible: false
-                    titleText: "Angle of QWP [deg.]"
-                    titleFont.family: ".AppleSystemUIFont"
-                    max: 360
-                }
-                axisY: ValueAxis {
-                    visible: true
-                    lineVisible: true
-                    titleFont.hintingPreference: Font.PreferDefaultHinting
-                    titleFont.family: ".AppleSystemUIFont"
-                    subGridVisible: true
-                    titleVisible: false
-                    gridVisible: false
-                    titleText: "Intensity [arb. units]"
-                    max: 1.1
+                    axisX: ValueAxis {
+                        visible: true
+                        tickInterval: 45
+                        titleFont.capitalization: Font.MixedCase
+                        tickAnchor: 0
+                        subGridVisible: true
+                        titleVisible: true
+                        gridVisible: false
+                        titleText: "Angle of QWP [deg.]"
+                        titleFont.family: ".AppleSystemUIFont"
+                        max: 360
+                    }
+                    axisY: ValueAxis {
+                        visible: true
+                        lineVisible: true
+                        titleFont.hintingPreference: Font.PreferDefaultHinting
+                        titleFont.family: ".AppleSystemUIFont"
+                        subGridVisible: true
+                        titleVisible: false
+                        gridVisible: false
+                        titleText: "Intensity [arb. units]"
+                        max: 1.1
+                    }
+
+                    LineSeries {
+                        id: lineSeries
+                        color: "blue"
+                    }
                 }
 
-                LineSeries {
-                    id: lineSeries
-                    color: "blue"
+                Text {
+                    id: yAxisTextQWP
+                    x: -40
+                    y: 242
+                    visible: true
+                    text: "Intensity [arb. units]"
+                    font.pixelSize: 13
+                    rotation: -90
+                    // 必要に応じて調整
+                    color: "#000000"
                 }
             }
 
-            Text {
-                id: yAxisText
-                x: -40
-                y: 28
-                text: "Intensity [arb. units]"
-                font.pixelSize: 13
-                rotation: -90
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.left: parent.left
-                anchors.leftMargin: -40 // 必要に応じて調整
-                color: "#000000"
+            Item {
+                id: graphPoincare
+                width: 200
+                height: 200
+            }
+
+
+            /*View3D {
+                id: graphAreaPS
+                anchors.fill: parent
+
+                visible: false
+                //visible: graphSelect.currentIndex === 1 // 表示切り替え
+                environment: SceneEnvironment {
+                    clearColor: "#303030"
+                    //clearColor: "#FFFFEE"
+                    backgroundMode: SceneEnvironment.Color
+                    // lightProbe: ProceduralSkyLightProbe {} // 必要に応じて
+                }
+
+                PerspectiveCamera {
+                    id: cameraPS
+                    position: Qt.vector3d(0, 0, 3) // 例: 球から少し離れた位置
+                    //lookAt: Qt.vector3d(0, 0, 0) // 例: 球の中心を見る
+                    eulerRotation: Qt.vector3d(0, 0, 0)
+                }
+
+                DirectionalLight {
+                    eulerRotation.x: -45
+                }
+
+                // ポアンカレ球の本体 (半透明の球メッシュ)
+                Model {
+                    id: poincareSphereBody
+                    source: "meshes/sphere_001_mesh.mesh" // 球メッシュのパス (リソースに追加するか、ローカルパスを指定)
+                    materials: [poincareSphereBodyMaterial]
+                    //scale: Qt.vector3d(1, 1, 1) // 球の半径が1になるように調整
+                }
+
+                // 軸の描画 (例: 細いシリンダーモデルを使用)
+                // Model { source: "qrc:/meshes/axis_cylinder.obj"; position: ...; rotation: ...; scale: ...; materials: ... }
+                // (X, Y, Z軸それぞれに配置)
+
+                // ストークスパラメータの点をプロット
+                Node {
+                    // Repeater3Dの親Node
+                    Repeater3D {
+                        id: stokesPointsRepeater
+                        model: myUIHandler.stokesPointsModel // Python側から供給するデータモデル (QAbstractListModel推奨)
+
+                        // 例: [{x:0, y:0, z:1, color:"red"}, ...]
+                        delegate: Model {
+                            source: "#Sphere" // 小さな球で点を表現
+                            scale: Qt.vector3d(0.05, 0.05, 0.05) // 点のサイズ
+                            position: Qt.vector3d(
+                                          modelData.x, modelData.y,
+                                          modelData.z) // modelDataから座標を取得
+                        }
+                    }
+                }
+            }*/
+        }
+
+        Button {
+            id: saveIntensityDataButton
+            x: 196
+            y: 551
+            text: qsTr("Save Intensity Data")
+
+            Connections {
+                target: saveIntensityDataButton
+                function onClicked() {
+                    myUIHandler.save_array_data()
+                }
             }
         }
-    }
 
-    Button {
-        id: saveIntensityDataButton
-        x: 196
-        y: 724
-        text: qsTr("Save Intensity Data")
+        Button {
+            id: saveGraphButton
+            x: 480
+            y: 551
+            text: qsTr("Save Graph")
+
+            Connections {
+                target: saveGraphButton
+                function onClicked() {
+                    myUIHandler.save_graph()
+                }
+            }
+        }
 
         Connections {
-            target: saveIntensityDataButton
-            function onClicked() {
-                myUIHandler.save_array_data()
+            target: myUIHandler
+            function onIndicatorRun() {
+                busyIndicator.running = true
             }
         }
-    }
-
-    Button {
-        id: saveGraphButton
-        x: 480
-        y: 724
-        text: qsTr("Save Graph")
 
         Connections {
-            target: saveGraphButton
-            function onClicked() {
-                myUIHandler.save_graph()
+            target: myUIHandler
+            function onIndicatorStop() {
+                busyIndicator.running = false
+            }
+        }
+
+        Connections {
+            target: myUIHandler
+            function onFolderPathSelected(path) {
+                folderSelectField.text = path
+            }
+        }
+
+        Connections {
+            target: myUIHandler
+            function onSendPoints(pointsArray) {
+                lineSeries.clear()
+                //lineSeries.replace(pointsArray)
+                for (var i = 0; i < pointsArray.length; i++) {
+                    //var pt = pointsArray[i]
+                    lineSeries.append(pointsArray[i][0], pointsArray[i][1])
+                }
+                busyIndicator.running = false
             }
         }
     }
 
-    Connections {
-        target: myUIHandler
-        function onIndicatorRun() {
-            busyIndicator.running = true
-        }
-    }
+    Item {
+        id: __materialLibrary__
 
-    Connections {
-        target: myUIHandler
-        function onIndicatorStop() {
-            busyIndicator.running = false
+        PrincipledMaterial {
+            id: poincareSphereBodyMaterial
+            objectName: "poincareSphereBodyMaterial"
+            baseColor: Qt.rgba(0.7, 0.7, 0.8, 0.3) // 半透明
+            metalness: 0.1
+            roughness: 0.7
+            alphaMode: PrincipledMaterial.Blend
         }
-    }
 
-    Connections {
-        target: myUIHandler
-        function onFolderPathSelected(path) {
-            folderSelectField.text = path
-        }
-    }
-
-    Connections {
-        target: myUIHandler
-        function onSendPoints(pointsArray) {
-            lineSeries.clear()
-            //lineSeries.replace(pointsArray)
-            for (var i = 0; i < pointsArray.length; i++) {
-                //var pt = pointsArray[i]
-                lineSeries.append(pointsArray[i][0], pointsArray[i][1])
-            }
-            busyIndicator.running = false
+        PrincipledMaterial {
+            objectName: ""
+            //baseColor: modelData.color // modelDataから色を取得
         }
     }
 }
+
+/*##^##
+Designer {
+    D{i:0;matPrevEnvDoc:"SkyBox";matPrevEnvValueDoc:"preview_studio";matPrevModelDoc:"#Sphere"}
+}
+##^##*/
+

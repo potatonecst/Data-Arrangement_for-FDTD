@@ -6,7 +6,7 @@ import numpy as np
 from PySide6.QtQuickControls2 import QQuickStyle
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtQml import QQmlApplicationEngine
-from PySide6.QtCore import QObject, Slot, Signal, QSize, QPointF
+from PySide6.QtCore import QObject, Slot, Signal, QSize, QFileInfo, QPointF
 from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton, QFileDialog
 
 from autogen.settings import url, import_paths
@@ -15,6 +15,8 @@ from DataArranger_func import *
 
 class MyUIHandler(QObject):
     openSettingsWindow = Signal() #Settingsウィンドウを開く
+    reflectValues = Signal(int, str, str, str, str) #Settingsで設定可能な項目の現在の値をSettingsウィンドウに反映
+    sendFileName = Signal(str, str) #利用するファイル名をqmlに送る
     folderPathSelected = Signal(str) #フォルダパスが取得されたときにそのパス（文字列）をqmlに送る
     sendPoints = Signal(list) #データ点のlistをqmlに送る
     saveImage = Signal(str)
@@ -23,26 +25,48 @@ class MyUIHandler(QObject):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.arranger = ArrangerM1() #DataArranger
     
     def getObjectName(self, name):
         self.graphItem = name
 
     @Slot()
     def open_settings_window(self):
+        self.reflectValues.emit(self.arranger.divNo, self.arranger.Es_real_name, self.arranger.Es_imag_name, self.arranger.Ep_real_name, self.arranger.Ep_imag_name)
         self.openSettingsWindow.emit()
+
+    @Slot(str)
+    def setFileName(self, fileNameField):
+        filePath, _ = QFileDialog.getOpenFileName(
+            parent = None,
+            caption = "Filename Select",
+            dir = "../../"
+        )
+        if filePath:
+            fileInfo = QFileInfo(filePath)
+            fileName = fileInfo.fileName()
+            self.sendFileName.emit(fileName, fileNameField)
+    
+    @Slot(int, str, str, str, str)
+    def apply_settings(self, divNo, EsRealName, EsImagName, EpRealName, EpImagName):
+        self.arranger.setDivisionNo(divNo)
+        self.arranger.setFileName(EsRealName, "EsReal")
+        self.arranger.setFileName(EsImagName, "EsImag")
+        self.arranger.setFileName(EpRealName, "EpReal")
+        self.arranger.setFileName(EpImagName, "EpImag")
 
     @Slot()
     def open_folder_dialog(self):
         self.indicatorRun.emit()
         #フォルダ選択
-        folder_path = QFileDialog.getExistingDirectory(
+        self.folder_path = QFileDialog.getExistingDirectory(
             parent = None,  #親ウィジェット
             caption = "Select Folder", #ダイアログのタイトル
             dir = "../../" #初期ディレクトリ(空文字列でカレントディレクトリ)
         )
-        if folder_path:
-            print(f"Selected folder: {folder_path}")
-            self.folderPathSelected.emit(folder_path) #取得したフォルダパスをQMLに送信する
+        if self.folder_path:
+            print(f"Selected folder: {self.folder_path}")
+            self.folderPathSelected.emit(self.folder_path) #取得したフォルダパスをQMLに送信する
             self.indicatorStop.emit()
         else:
             print("Cancel")
@@ -53,10 +77,10 @@ class MyUIHandler(QObject):
         self.indicatorRun.emit()
         if folderPath:
             print("Start Arranging...")
-            self.arranger = ArrangerM1(folderPath)
+            self.arranger.setFolderPath(folderPath)
             self.arranger.fileInput()
             self.arranger.extractData()
-            self.theta, self.I = self.arranger.calcPolarization()
+            self.s1, self.s2, self.s3, self.theta, self.I = self.arranger.calcPolarization()
             self.points1 = [[float(np.rad2deg(t)), float(i1)] for t, i1 in zip(self.theta, self.I)]
             if self.sendPoints.emit(self.points1):
                 print("Send successfully")

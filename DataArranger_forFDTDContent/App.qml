@@ -15,9 +15,9 @@ Window {
     Window {
         id: settingsWindow
         width: 500
-        height: 400
+        height: 425
         minimumWidth: 500
-        minimumHeight: 400
+        minimumHeight: 425
         visible: false
         title: "Settings"
 
@@ -25,13 +25,13 @@ Window {
             id: settingsLoader
             anchors.fill: parent
             source: "./SettingsWindow.ui.qml"  // .ui.qml を読み込む
-            onLoaded: {
-                if (settingsLoader.item) {
+            //onLoaded: {
+            //    if (settingsLoader.item) {
                     // 必要ならさらに設定も可能
-                    settingsLoader.item.width = settingsWindow.width
-                    settingsLoader.item.height = settingsWindow.height
-                }
-            }
+            //        settingsLoader.item.width = settingsWindow.width
+            //        settingsLoader.item.height = settingsWindow.height
+            //    }
+            //}
         }
     }
 

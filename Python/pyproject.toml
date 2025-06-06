@@ -1,0 +1,5 @@
+[project]
+name = "DataArranger_forFDTD"
+
+[tool.pyside6-project]
+files = ["main.py", "autogen/settings.py"]

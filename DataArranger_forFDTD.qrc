@@ -1,0 +1,16 @@
+
+<RCC>
+    <qresource>
+        <file>DataArranger_forFDTD.qmlproject</file>
+        <file>DataArranger_forFDTD/Constants.qml</file>
+        <file>DataArranger_forFDTD/EventListModel.qml</file>
+        <file>DataArranger_forFDTD/EventListSimulator.qml</file>
+        <file>DataArranger_forFDTD/qmldir</file>
+        <file>DataArranger_forFDTDContent/App.qml</file>
+        <file>DataArranger_forFDTDContent/images/icon_gear.svg</file>
+        <file>DataArranger_forFDTDContent/PoincareSphereGraph.qml</file>
+        <file>DataArranger_forFDTDContent/Screen01.ui.qml</file>
+        <file>DataArranger_forFDTDContent/SettingsWindow.ui.qml</file>
+        <file>qtquickcontrols2.conf</file>
+    </qresource>
+</RCC>
