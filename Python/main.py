@@ -4,10 +4,10 @@ from pathlib import Path
 import numpy as np
 
 from PySide6.QtQuickControls2 import QQuickStyle
-from PySide6.QtGui import QGuiApplication
+#from PySide6.QtGui import QGuiApplication
 from PySide6.QtQml import QQmlApplicationEngine
-from PySide6.QtCore import QObject, Slot, Signal, QSize, QFileInfo, QPointF
-from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton, QFileDialog
+from PySide6.QtCore import QObject, Slot, Signal, QSize, QFileInfo#, QPointF
+from PySide6.QtWidgets import QApplication, QFileDialog#, QMainWindow, QPushButton
 
 from autogen.settings import url, import_paths
 
@@ -150,19 +150,22 @@ if __name__ == '__main__':
 
     app = QApplication(sys.argv)
     engine = QQmlApplicationEngine()
+    if getattr(sys, 'frozen', False): #.app バンドル内で実行されているとき
+        app_dir = Path(sys.executable).parent.parent
+        resource_dir = app_dir / 'Resources'
+    else:
+        resource_dir = Path(__file__).parent.parent
 
-    app_dir = Path(__file__).parent.parent
-
-    engine.addImportPath(os.fspath(app_dir))
+    engine.addImportPath(os.fspath(resource_dir))
     for path in import_paths:
-        engine.addImportPath(os.fspath(app_dir / path))
+        engine.addImportPath(os.fspath(resource_dir / path))
 
     # UIのハンドラーをQMLコンテキストに公開
     # QMLからmyUIHandlerという名前でopen_file_dialogメソッドを呼び出せるようにする
     my_ui_handler = MyUIHandler()
     engine.rootContext().setContextProperty("myUIHandler", my_ui_handler) 
 
-    engine.load(os.fspath(app_dir/url))
+    engine.load(os.fspath(resource_dir/url))
     if not engine.rootObjects():
         sys.exit(-1)
     

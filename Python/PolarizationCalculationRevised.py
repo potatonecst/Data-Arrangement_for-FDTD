@@ -1,5 +1,5 @@
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 from HybridModeSolverRevised import CalcHEMode
 
 def RotationMatrix2D(theta):
@@ -77,6 +77,7 @@ def CalcPolarizationFDTD(Ey, Ez, theta, faxis):
 
 #Example
 if __name__ == "__main__":
+    import matplotlib.pyplot as plt
     #----Initial Conditions----
     a = (200)*1e-9 #Fiber Radius
     nco = 1.45 #Silica

@@ -1,6 +1,6 @@
 import sys
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 from HybridModeSolverRevised import CalcHEMode
 from PolarizationCalculationRevised import CalcPolarizationFDTD
 
@@ -105,6 +105,7 @@ class ArrangerM1:
         return self.s1, self.s2, self.s3, self.theta, self.I
 
 if __name__ == "__main__":
+    import matplotlib.pyplot as plt
     #folderPath = "/Users/neirotakada/Library/CloudStorage/Box-Box/Sadgrove研究室/研究/FDTD/20250520/90deg_revised_div201"
     folderPath = "/Users/neirotakada/Library/CloudStorage/Box-Box/Sadgrove研究室/研究/FDTD/20250523/minus90deg_div201"
     alpha = -np.pi/2 #HEモードの理論計算用
