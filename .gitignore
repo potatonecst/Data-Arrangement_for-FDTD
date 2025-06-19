@@ -1,3 +1,5 @@
-/Python/__pycache__
-/build
-/dist
+**/.DS_Store
+/Python/.DS_Store
+**/__pycache__/**
+/build/**
+/dist/**

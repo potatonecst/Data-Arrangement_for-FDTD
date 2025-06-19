@@ -1,4 +1,3 @@
-import sys
 import numpy as np
 #import matplotlib.pyplot as plt
 from HybridModeSolverRevised import CalcHEMode
@@ -31,7 +30,6 @@ def str2FloatArr(arr): #文字列の2重listをfloat型に
 
 class ArrangerM1:
     def __init__(self):
-        #self.folderPath = folderPath
         self.theta = np.linspace(0, 2 * np.pi, 1000)
         self.faxis = 0
         self.sigmaX = np.array([[0, 1], #Pauli行列
@@ -49,10 +47,10 @@ class ArrangerM1:
     def setFolderPath(self, folderPath):
         self.folderPath = folderPath
 
-    def setDivisionNo(self, divNo):
+    def setDivisionNo(self, divNo): #settings項目
         self.divNo = divNo
 
-    def setFileName(self, fileName, EComponentVar):
+    def setFileName(self, fileName, EComponentVar): #settings項目
         if EComponentVar == "EsReal":
             self.Es_real_name = fileName
         elif EComponentVar == "EsImag":
@@ -69,32 +67,37 @@ class ArrangerM1:
         self.EpFile_imag = fileReading(self.folderPath + "/" + self.Ep_imag_name)
     
     def extractData(self):
-        self.ux = 1
-        self.uy = np.array(str2Float(self.EpFile_real.readBetween(4, 4 + self.divNo)))
-        self.uz = np.array(str2Float(self.EpFile_real.readBetween(6 + self.divNo, 6 + 2 * self.divNo)))
-
-        self.Theta = np.arctan(np.sqrt(self.ux ** 2 + self.uy ** 2) / (self.uz + sys.float_info.epsilon))
-        self.Phi = np.arctan(self.uy / self.ux)
-
+        self.uz = np.array(str2Float(self.EpFile_real.readBetween(4, 4 + self.divNo)))
+        self.uy = np.array(str2Float(self.EpFile_real.readBetween(6 + self.divNo, 6 + 2 * self.divNo)))
+        self.xp = self.uy #モニターを通過した光が進む方向をr(z)とする座標系のx座標配列
+        self.yp = - self.uz #同じくy座標配列
+        self.xpMesh, self.ypMesh = np.meshgrid(self.xp, self.yp) #上記の配列から(x, y)座標の組を生成
+        with np.errstate(invalid="ignore"):
+            self.zpMesh = np.sqrt(1 - self.xpMesh ** 2 - self.ypMesh ** 2) #z座標を計算(半径1の球の外側ではnanになる)
+        
+        self.Theta = np.arctan2(np.sqrt(self.xpMesh ** 2 + self.ypMesh ** 2), self.zpMesh) 
+        self.Phi = np.arctan2(self.ypMesh, self.xpMesh) #arctan(self.yp / self.xp)で、self.xpとself.ypが同時に0になる時、0を返す
+        print(self.Theta, self.Phi)
+        
         self.Es_real = np.array(str2FloatArr(divideStr(self.EsFile_real.readBetween(8 + 2 * self.divNo, 8 + 3 * self.divNo))))
         self.Es_imag = np.array(str2FloatArr(divideStr(self.EsFile_imag.readBetween(8 + 2 * self.divNo, 8 + 3 * self.divNo))))
-        self.Es = self.Es_real + 1j * self.Es_imag
-
+        self.Es = np.array(self.Es_real + 1j * self.Es_imag).T[::-1, :]
+        
         self.Ep_real = np.array(str2FloatArr(divideStr(self.EpFile_real.readBetween(8 + 2 * self.divNo, 8 + 3 * self.divNo))))
         self.Ep_imag = np.array(str2FloatArr(divideStr(self.EpFile_imag.readBetween(8 + 2 * self.divNo, 8 + 3 * self.divNo))))
-        self.Ep = self.Ep_real + 1j * self.Ep_imag
+        self.Ep = np.array(self.Ep_real + 1j * self.Ep_imag).T[::-1, :]
     
     def calcPolarization(self):
         self.ind = int(np.ceil(self.divNo / 2)) if self.divNo % 2 == 0 else int(np.ceil(self.divNo / 2)) - 1 #原点あるいは原点に最も近い正の点を示すindex
         print(self.ind, self.uz[self.ind])
         self.EsPP = self.Es[self.ind, self.ind]
         self.EpPP = self.Ep[self.ind, self.ind]
-        #self.EyPP = self.EpPP * np.cos(self.Theta[self.ind]) * np.sin(self.Phi[self.ind]) + self.EsPP * np.cos(self.Phi[self.ind])
-        #self.EzPP = -self.EpPP * np.sin(self.Theta[self.ind])
-        self.EyPP = self.EsPP * np.cos(self.Theta[self.ind]) * np.sin(self.Phi[self.ind]) + self.EpPP * np.cos(self.Phi[self.ind])
-        self.EzPP = -self.EsPP * np.sin(self.Theta[self.ind])
-        self.pureState = np.array([[self.EzPP], #純粋状態
-                                   [self.EyPP]])
+        print(f"Es: {self.EsPP}, Ep: {self.EpPP}")
+        self.EyPP = self.EpPP * np.cos(self.Theta[self.ind, self.ind]) * np.cos(self.Phi[self.ind, self.ind]) - self.EsPP * np.sin(self.Phi[self.ind, self.ind])
+        self.EzPP = - (self.EpPP * np.cos(self.Theta[self.ind, self.ind]) * np.sin(self.Phi[self.ind, self.ind]) + self.EsPP * np.cos(self.Phi[self.ind, self.ind]))
+        
+        self.pureState = np.array([[self.EzPP], 
+                                   [self.EyPP]]) #純粋状態
         self.rho = self.pureState @ self.pureState.conj().T #純粋状態の密度行列
         self.S0 = np.trace(self.rho @ np.identity(2)).real #Stokesパラメータ
         self.s1 = (np.trace(self.rho @ self.sigmaZ) / self.S0).real
@@ -108,6 +111,7 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     #folderPath = "/Users/neirotakada/Library/CloudStorage/Box-Box/Sadgrove研究室/研究/FDTD/20250520/90deg_revised_div201"
     folderPath = "/Users/neirotakada/Library/CloudStorage/Box-Box/Sadgrove研究室/研究/FDTD/20250523/minus90deg_div201"
+    #folderPath = "/Users/neirotakada/Library/CloudStorage/Box-Box/Sadgrove研究室/研究/FDTD/20250613/componentCheck"
     alpha = -np.pi/2 #HEモードの理論計算用
     arranger = ArrangerM1()
     arranger.setFolderPath(folderPath)
@@ -116,14 +120,15 @@ if __name__ == "__main__":
     arranger.extractData()
     s1, s2, s3, Theta, I = arranger.calcPolarization()
     print(s1, s2, s3)
-    print(s1 ** 2 + s2 ** 2 + s3 **2)
-
+    s = s1 ** 2 + s2 ** 2 + s3 **2
+    print(s)
+    
     fig, ax = plt.subplots()
     ax.plot(np.rad2deg(Theta), I)
     ax.set_xlabel("Angle of QWP [deg]")
     ax.set_ylabel("Intensity [arb. units]")
     ax.set_ylim([0, 1.1])
-
+    
     a = 200e-9
     nco = 1.45
     ncl = 1.0
@@ -144,7 +149,8 @@ if __name__ == "__main__":
     s3Theo = (np.trace(rhoTheo @ np.array([[0, -1j], [1j, 0]])) / S0Theo).real
     print("Theoretical")
     print(s1Theo, s2Theo, s3Theo)
-    print(s1Theo ** 2 + s2Theo ** 2 + s3Theo ** 2)
+    sTheo = s1Theo ** 2 + s2Theo ** 2 + s3Theo ** 2
+    print(sTheo)
     theta = np.linspace(0., np.pi, 19)
     phi = np.linspace(0., 2.*np.pi, 19)
     thetaMesh, phiMesh = np.meshgrid(theta, phi)
@@ -164,4 +170,6 @@ if __name__ == "__main__":
     ax2.set_ylabel("S_2")
     ax2.set_zlabel("S_3")
     ax2.legend()
+    fig2.text(0.01, 0.80, f"<FDTD>\ns={s}\ns1={s1}\ns2={s2}\ns3={s3}")
+    fig2.text(0.01, 0.05, f"<Theoretical>\nalpha= {np.rad2deg(alpha)} deg.\ns={sTheo}\ns1={s1Theo}\ns2={s2Theo}\ns3={s3Theo}")
     plt.show()
