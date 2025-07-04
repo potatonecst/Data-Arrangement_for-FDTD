@@ -1,5 +1,6 @@
 **/.DS_Store
 /Python/.DS_Store
+/Python/NoGUI.py
 **/__pycache__/**
 /build/**
 /dist/**

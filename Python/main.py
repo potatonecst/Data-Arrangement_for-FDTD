@@ -6,7 +6,7 @@ import numpy as np
 from PySide6.QtQuickControls2 import QQuickStyle
 #from PySide6.QtGui import QGuiApplication
 from PySide6.QtQml import QQmlApplicationEngine
-from PySide6.QtCore import QObject, Slot, Signal, QSize, QFileInfo#, QPointF
+from PySide6.QtCore import QObject, Property, Slot, Signal, QSize, QFileInfo#, QPointF
 from PySide6.QtWidgets import QApplication, QFileDialog#, QMainWindow, QPushButton
 
 from autogen.settings import url, import_paths
@@ -15,24 +15,26 @@ from DataArranger_func import *
 
 class MyUIHandler(QObject):
     openSettingsWindow = Signal() #Settingsウィンドウを開く
-    reflectValues = Signal(int, str, str, str, str) #Settingsで設定可能な項目の現在の値をSettingsウィンドウに反映
+    reflectValues = Signal(int, bool, float, bool, str, str, str, str) #Settingsで設定可能な項目の現在の値をSettingsウィンドウに反映
     sendFileName = Signal(str, str) #利用するファイル名をqmlに送る
     folderPathSelected = Signal(str) #フォルダパスが取得されたときにそのパス（文字列）をqmlに送る
-    sendPoints = Signal(list) #データ点のlistをqmlに送る
+    sendPointsFDTD = Signal(list) #データ点のlistをqmlに送る
+    sendPointsSimpleSim = Signal(list) #SimpleSimのデータ点のlistをqmlに送る
+    clearSimpleSimSeries = Signal() #qmlにあるSimpleSimのデータ点を消す
     saveImage = Signal(str)
     indicatorRun = Signal() #busyIndicatorを回す
     indicatorStop = Signal() #busyIndicator止める
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.arranger = ArrangerM1() #DataArranger
+        self.arranger = Arranger() #DataArranger
     
     def getObjectName(self, name):
         self.graphItem = name
 
     @Slot()
     def open_settings_window(self):
-        self.reflectValues.emit(self.arranger.divNo, self.arranger.Es_real_name, self.arranger.Es_imag_name, self.arranger.Ep_real_name, self.arranger.Ep_imag_name)
+        self.reflectValues.emit(self.arranger.divNo, self.arranger.simpleSim, self.arranger.alpha, self.arranger.monitorSide, self.arranger.Es_real_name, self.arranger.Es_imag_name, self.arranger.Ep_real_name, self.arranger.Ep_imag_name)
         self.openSettingsWindow.emit()
 
     @Slot(str)
@@ -47,9 +49,12 @@ class MyUIHandler(QObject):
             fileName = fileInfo.fileName()
             self.sendFileName.emit(fileName, fileNameField)
     
-    @Slot(int, str, str, str, str)
-    def apply_settings(self, divNo, EsRealName, EsImagName, EpRealName, EpImagName):
+    @Slot(int, bool, float, bool, str, str, str, str)
+    def apply_settings(self, divNo, simpleSim, alpha, monitorSide, EsRealName, EsImagName, EpRealName, EpImagName):
         self.arranger.setDivisionNo(divNo)
+        self.arranger.setSimpleSim(simpleSim)
+        self.arranger.setAlpha(alpha)
+        self.arranger.setMonitorSide(monitorSide)
         self.arranger.setFileName(EsRealName, "EsReal")
         self.arranger.setFileName(EsImagName, "EsImag")
         self.arranger.setFileName(EpRealName, "EpReal")
@@ -80,10 +85,20 @@ class MyUIHandler(QObject):
             self.arranger.setFolderPath(folderPath)
             self.arranger.fileInput()
             self.arranger.extractData()
-            self.s1, self.s2, self.s3, self.theta, self.I = self.arranger.calcPolarization()
-            self.points1 = [[float(np.rad2deg(t)), float(i1)] for t, i1 in zip(self.theta, self.I)]
-            if self.sendPoints.emit(self.points1):
+            self.s1FDTD, self.s2FDTD, self.s3FDTD, self.theta, self.IFDTD = self.arranger.calcPolarization()
+            self.points1 = [[float(np.rad2deg(t)), float(i1)] for t, i1 in zip(self.theta, self.IFDTD)]
+            if self.arranger.simpleSim:
+                self.s1Sim, self.s2Sim, self.s3Sim, self.theta, self.ISim = self.arranger.simpleSimulations()
+                self.points2 = [[float(np.rad2deg(t)), float(i1)] for t, i1 in zip(self.theta, self.ISim)]
+            else:
+                self.clearSimpleSimSeries.emit()
+            if self.sendPointsFDTD.emit(self.points1):
                 print("Send successfully")
+                if self.arranger.simpleSim and self.sendPointsSimpleSim.emit(self.points2):
+                    print("Send successfully")
+                else:
+                    print("Failed to send")
+                    self.indicatorStop.emit()
             else:
                 print("Failed to send")
                 self.indicatorStop.emit()

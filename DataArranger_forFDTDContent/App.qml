@@ -15,9 +15,11 @@ Window {
     Window {
         id: settingsWindow
         width: 500
-        height: 425
+        height: 400
         minimumWidth: 500
-        minimumHeight: 425
+        minimumHeight: 400
+        maximumWidth: 500
+        maximumHeight: 400
         visible: false
         title: "Settings"
 

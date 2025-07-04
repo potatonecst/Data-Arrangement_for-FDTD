@@ -10,6 +10,7 @@ import QtQuick3D
 import QtQuick.Controls
 import DataArranger_forFDTD
 import QtQuick.Studio.Components 1.0
+import QtDataVisualization
 import QtGraphs
 
 Rectangle {
@@ -202,8 +203,13 @@ Rectangle {
                     }
 
                     LineSeries {
-                        id: lineSeries
+                        id: lineSeriesFDTD
                         color: "blue"
+                    }
+
+                    LineSeries {
+                        id: lineSeriesSimpleSim
+                        color: "orange"
                     }
                 }
 
@@ -220,67 +226,11 @@ Rectangle {
                 }
             }
 
-            Item {
+            GroupItem {
                 id: graphPoincare
-                width: 200
-                height: 200
-            }
-
-
-            /*View3D {
-                id: graphAreaPS
                 anchors.fill: parent
-
-                visible: false
-                //visible: graphSelect.currentIndex === 1 // 表示切り替え
-                environment: SceneEnvironment {
-                    clearColor: "#303030"
-                    //clearColor: "#FFFFEE"
-                    backgroundMode: SceneEnvironment.Color
-                    // lightProbe: ProceduralSkyLightProbe {} // 必要に応じて
-                }
-
-                PerspectiveCamera {
-                    id: cameraPS
-                    position: Qt.vector3d(0, 0, 3) // 例: 球から少し離れた位置
-                    //lookAt: Qt.vector3d(0, 0, 0) // 例: 球の中心を見る
-                    eulerRotation: Qt.vector3d(0, 0, 0)
-                }
-
-                DirectionalLight {
-                    eulerRotation.x: -45
-                }
-
-                // ポアンカレ球の本体 (半透明の球メッシュ)
-                Model {
-                    id: poincareSphereBody
-                    source: "meshes/sphere_001_mesh.mesh" // 球メッシュのパス (リソースに追加するか、ローカルパスを指定)
-                    materials: [poincareSphereBodyMaterial]
-                    //scale: Qt.vector3d(1, 1, 1) // 球の半径が1になるように調整
-                }
-
-                // 軸の描画 (例: 細いシリンダーモデルを使用)
-                // Model { source: "qrc:/meshes/axis_cylinder.obj"; position: ...; rotation: ...; scale: ...; materials: ... }
-                // (X, Y, Z軸それぞれに配置)
-
-                // ストークスパラメータの点をプロット
-                Node {
-                    // Repeater3Dの親Node
-                    Repeater3D {
-                        id: stokesPointsRepeater
-                        model: myUIHandler.stokesPointsModel // Python側から供給するデータモデル (QAbstractListModel推奨)
-
-                        // 例: [{x:0, y:0, z:1, color:"red"}, ...]
-                        delegate: Model {
-                            source: "#Sphere" // 小さな球で点を表現
-                            scale: Qt.vector3d(0.05, 0.05, 0.05) // 点のサイズ
-                            position: Qt.vector3d(
-                                          modelData.x, modelData.y,
-                                          modelData.z) // modelDataから座標を取得
-                        }
-                    }
-                }
-            }*/
+                visible: graphSelect.currentIndex === 1
+            }
         }
 
         Button {
@@ -334,14 +284,26 @@ Rectangle {
 
         Connections {
             target: myUIHandler
-            function onSendPoints(pointsArray) {
-                lineSeries.clear()
+            function onSendPointsFDTD(pointsArray) {
+                lineSeriesFDTD.clear()
                 //lineSeries.replace(pointsArray)
                 for (var i = 0; i < pointsArray.length; i++) {
                     //var pt = pointsArray[i]
-                    lineSeries.append(pointsArray[i][0], pointsArray[i][1])
+                    lineSeriesFDTD.append(pointsArray[i][0], pointsArray[i][1])
                 }
                 busyIndicator.running = false
+            }
+            function onSendPointsSimpleSim(pointsArray) {
+                lineSeriesSimpleSim.clear()
+                for (var i = 0; i < pointsArray.length; i++) {
+                    //var pt = pointsArray[i]
+                    lineSeriesSimpleSim.append(pointsArray[i][0],
+                                               pointsArray[i][1])
+                }
+                busyIndicator.running = false
+            }
+            function onClearSimpleSimSeries() {
+                lineSeriesSimpleSim.clear()
             }
         }
     }

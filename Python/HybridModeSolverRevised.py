@@ -1,4 +1,4 @@
-import numpy  as np
+import numpy as np
 from scipy.special import jn, kn, jvp, kvp
 from scipy.optimize import root_scalar
 
@@ -17,9 +17,9 @@ def HybridModeEigenvalueEqSolver(V, n, l, nco, ncl):
         
         return DenomR ** 2 * NumerL1 * NumerL2 - DenomL ** 2 * NumerR1 * NumerR2
     
-    U = np.linspace(0, V, 10000) # Uパラメータ
-    eigenValueArr = HybridModeEigenvalueEq(U) #固有値方程式配列
-    signChangeInd, = np.nonzero(eigenValueArr[:-1] * eigenValueArr[1:] < 0) #符号変化のインデックス
+    U = np.linspace(0, V, 10000) #Uパラメータ
+    eigenvalueArr = HybridModeEigenvalueEq(U) #固有値方程式配列
+    signChangeInd, = np.nonzero(eigenvalueArr[:-1] * eigenvalueArr[1:] < 0) #符号変化のインデックス
     
     zeroUArr = []
     for ind in signChangeInd:
@@ -34,27 +34,23 @@ def HybridModeEigenvalueEqSolver(V, n, l, nco, ncl):
     
     return Usol
 
-# HEモードの電場計算
+# Eモードの電場計算
 def CalcHEMode(a, nco, ncl, n, l, lam, psi, R, T, propDir):
     k = 2 * np.pi / lam
-
-    # 規格化周波数V
-    V = k * a * np.sqrt(nco**2 - ncl**2)
-
-    # 固有値Uを求める
-    U = HybridModeEigenvalueEqSolver(V, n, l, nco, ncl)
+    
+    V = k * a * np.sqrt(nco**2 - ncl**2) #規格化周波数V
+    
+    U = HybridModeEigenvalueEqSolver(V, n, l, nco, ncl) #固有値Uを求める
     if U is None:
         print(f"Error: No solution found for mode (n={n}, l={l}).")
         return None, None, None
     
-    # 伝播定数β
-    beta = np.sqrt(k**2 * nco**2 - (U / a)**2) if propDir == True else - np.sqrt(k**2 * nco**2 - (U / a)**2)
+    beta = np.sqrt(k**2 * nco**2 - (U / a)**2) if propDir == True else - np.sqrt(k**2 * nco**2 - (U / a)**2) #伝播定数β
     W = np.sqrt(V**2 - U**2)
     
-    # 電場分布の補正係数
-    s = n * (1/(U**2) + 1/(W**2)) / (jvp(n,U, 1)/(U * jn(n,U)) + kvp(n,W, 1)/(W * kn(n,W)))
+    s = n * (1/(U**2) + 1/(W**2)) / (jvp(n,U, 1)/(U * jn(n,U)) + kvp(n,W, 1)/(W * kn(n,W))) #電場分布の補正係数
     
-    # 電場分布
+    #電場分布
     Er = np.where(
         R < a,
         -1j * beta * (a / U) * ((1 - s) / 2 * jn(n-1, U / a * R) - (1 + s) / 2 * jn(n+1, U / a * R)) * np.cos(n * T + psi),
@@ -79,13 +75,13 @@ def CalcHEMode(a, nco, ncl, n, l, lam, psi, R, T, propDir):
     return Ex, Ey, Ez
 
 
-# Example usage:
+#例:
 if __name__ == "__main__":
     a = 200e-9  #fiber radius
-    nco = 1.45  # Core refractive index
-    ncl = 1.00  # Cladding refractive index
-    n = 1    # Mode number
-    l = 1    # Order of the mode
+    nco = 1.45  #Core refractive index
+    ncl = 1.00  #Cladding refractive index
+    n = 1    #Mode number
+    l = 1    #Order of the mode
     lam = 785e-9 #wavelength
     psi = np.pi/2.0 #phase of quasi-y pol.
     R = a   #radial distance
