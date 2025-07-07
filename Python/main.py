@@ -139,7 +139,7 @@ class MyUIHandler(QObject):
     @Slot()
     def save_array_data(self):
         self.indicatorRun.emit()
-        if hasattr(self, "I"):
+        if hasattr(self, "IFDTD"):
             self.arrayFileName, _ = QFileDialog.getSaveFileName(
                 parent = None,
                 caption = "Save Array Data",
@@ -147,7 +147,7 @@ class MyUIHandler(QObject):
                 filter = "NPY Files (*npy)"
             )
             if self.arrayFileName:
-                np.save(self.arrayFileName, self.I)
+                np.save(self.arrayFileName, self.IFDTD)
                 print("Save successfully. (Intensity Array Data)")
                 self.indicatorStop.emit()
             else:
