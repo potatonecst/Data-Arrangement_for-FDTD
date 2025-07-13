@@ -4,10 +4,9 @@ from pathlib import Path
 import numpy as np
 
 from PySide6.QtQuickControls2 import QQuickStyle
-#from PySide6.QtGui import QGuiApplication
 from PySide6.QtQml import QQmlApplicationEngine
-from PySide6.QtCore import QObject, Property, Slot, Signal, QSize, QFileInfo#, QPointF
-from PySide6.QtWidgets import QApplication, QFileDialog#, QMainWindow, QPushButton
+from PySide6.QtCore import QObject, Slot, Signal, QSize, QFileInfo
+from PySide6.QtWidgets import QApplication, QFileDialog
 
 from autogen.settings import url, import_paths
 

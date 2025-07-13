@@ -127,14 +127,13 @@ class Arranger:
         print(f"Es: {self.EsPP}, Ep: {self.EpPP}")
         self.EyPP = self.EpPP * np.cos(self.Theta[self.ind, self.ind]) * np.cos(self.Phi[self.ind, self.ind]) - self.EsPP * np.sin(self.Phi[self.ind, self.ind])
         self.EzPP = - (self.EpPP * np.cos(self.Theta[self.ind, self.ind]) * np.sin(self.Phi[self.ind, self.ind]) + self.EsPP * np.cos(self.Phi[self.ind, self.ind]))
-        if self.monitorSide == 0:
-            self.EzPP *= -1
         self.s1FDTD, self.s2FDTD, self.s3FDTD, self.IFDTD = self.calcState(self.EyPP, self.EzPP)
         
         return self.s1FDTD, self.s2FDTD, self.s3FDTD, self.theta, self.IFDTD
     
     def simpleSimulations(self):
-        self.ExSim, self.EySim, self.EzSim = CalcHEMode(self.a, self.nco, self.ncl, self.n, self.l, self.lam, self.psi, self.R, np.deg2rad(self.alpha), 0)
+        #propDir = not self.monitorSide により、sameの場合はpropDirが反転する
+        self.ExSim, self.EySim, self.EzSim = CalcHEMode(self.a, self.nco, self.ncl, self.n, self.l, self.lam, self.psi, self.R, np.deg2rad(self.alpha), not self.monitorSide)
         self.s1Sim, self.s2Sim, self.s3Sim, self.ISim = self.calcState(self.EySim, self.EzSim)
         
         return self.s1Sim, self.s2Sim, self.s3Sim, self.theta, self.ISim
